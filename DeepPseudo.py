@@ -49,7 +49,7 @@ DROPOUT = 0.25
 SCALE = np.sqrt(0.5)
 BATCH_SIZE = 64
 LR = 1e-3
-N_EPOCHS = 30
+N_EPOCHS = 40
 GRAD_CLIP = 1.0
 
 def tokenize_code(text):
@@ -477,6 +477,7 @@ class Trainer:
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
+        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer,milestones=[15,25],gamma = 0.4)
 
     def train_step(self, loader, epoch, grad_clip):
         loss_tracker, acc_tracker = AverageMeter(), AverageMeter()
@@ -504,6 +505,7 @@ class Trainer:
             pgd.restore()  # 恢复embedding参数
             nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
             self.optimizer.step()
+            self.scheduler.step()
             loss_tracker.update(loss.item())
             acc_tracker.update(accuracy(logits, trg[:, 1:]))
             loss_, ppl_, acc_ = loss_tracker.average, np.exp(loss_tracker.average), acc_tracker.average
